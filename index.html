@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="my">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>စမတ်ငွေကြေးစနစ် (Smart Currency System)</title>
+    
+    <!-- Tone.js CDN for sound effects -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.min.js"></script>
+    
+    <style>
+        /* --- WHITE & BLUE SMART CSS STYLING --- */
+        :root {
+            --primary-blue: #007bff; /* Bright primary blue */
+            --secondary-blue: #0056b3;
+            --light-bg: #f8f9fa; /* Off-white background */
+            --card-bg: #ffffff; /* Pure white card */
+            --text-color: #343a40; /* Dark gray text */
+            --accent-border: #dee2e6; /* Light gray border */
+            --success-color: #28a745;
+            --error-color: #dc3545;
+            --shadow-light: rgba(0, 0, 0, 0.15);
+            --font-family: 'Inter', 'Pyidaungsu', Arial, sans-serif;
+        }
+
+        body {
+            font-family: var(--font-family);
+            background-color: var(--light-bg);
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+            color: var(--text-color);
+        }
+
+        .converter-card {
+            background-color: var(--card-bg);
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 6px 15px var(--shadow-light);
+            width: 100%;
+            max-width: 500px;
+            margin-top: 50px;
+            transition: box-shadow 0.3s ease;
+        }
+
+        h1 {
+            text-align: center;
+            color: var(--primary-blue);
+            margin-bottom: 25px;
+            font-size: 1.8rem;
+            padding-bottom: 10px;
+            border-bottom: 2px solid var(--accent-border);
+        }
+
+        /* View Switching Animation */
+        .view-container {
+            display: none;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+        }
+
+        .view-container.active {
+            display: block;
+            opacity: 1;
+        }
+        
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        input[type="number"], select {
+            width: 100%;
+            padding: 12px;
+            background-color: #fff;
+            color: var(--text-color);
+            border: 1px solid var(--accent-border);
+            border-radius: 8px;
+            box-sizing: border-box;
+            font-size: 1rem;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+        
+        input[type="number"]:focus, select:focus {
+            outline: none;
+            border-color: var(--primary-blue);
+            box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.25);
+        }
+
+        /* Navigation Styling */
+        .navigation {
+            display: flex;
+            margin-bottom: 25px;
+            border-bottom: 1px solid var(--accent-border);
+        }
+        .nav-btn {
+            flex: 1;
+            padding: 10px 0;
+            background: none;
+            border: none;
+            border-bottom: 3px solid transparent;
+            color: var(--text-color);
+            font-weight: 600;
+            cursor: pointer;
+            transition: color 0.2s, border-bottom 0.2s;
+            font-size: 1rem;
+            border-radius: 0;
+        }
+        .nav-btn:hover {
+            color: var(--primary-blue);
+        }
+        .nav-btn.active-nav {
+            color: var(--primary-blue);
+            border-bottom: 3px solid var(--primary-blue);
+        }
+
+
+        .currency-selectors {
+            display: flex;
+            gap: 15px;
+        }
+
+        .currency-selectors .input-group {
+            flex: 1;
+        }
+
+        /* Main Convert Button */
+        #convertBtn {
+            width: 100%;
+            padding: 15px;
+            background-color: var(--primary-blue);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s ease-in-out; /* Animation */
+            margin-top: 10px;
+        }
+
+        #convertBtn:hover {
+            background-color: var(--secondary-blue);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 10px rgba(0, 123, 255, 0.4);
+        }
+        
+        #convertBtn:active {
+            transform: translateY(0);
+        }
+
+        /* Result Area */
+        #result {
+            margin-top: 30px;
+            padding: 20px;
+            background-color: var(--light-bg);
+            border: 1px solid var(--accent-border);
+            border-radius: 8px;
+            text-align: center;
+            font-size: 1.4rem;
+            font-weight: bold;
+            color: var(--text-color);
+            min-height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background-color 0.1s ease; /* Animation */
+        }
+
+        #error {
+            color: var(--error-color);
+            text-align: center;
+            margin-top: 15px;
+            font-weight: bold;
+        }
+
+        .note {
+            margin-top: 30px;
+            font-size: 0.85rem;
+            color: #6c757d;
+            text-align: center;
+            padding-top: 15px;
+            border-top: 1px solid var(--accent-border);
+        }
+        
+        /* Dashboard Specific Styles */
+        #home-view h2 {
+            color: var(--primary-blue);
+            font-size: 1.5rem;
+            margin-bottom: 15px;
+        }
+        .rate-list {
+            list-style: none;
+            padding: 0;
+            margin-top: 20px;
+        }
+        .rate-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px dashed var(--accent-border);
+            font-size: 1.1rem;
+        }
+        .rate-name {
+            font-weight: 500;
+        }
+        .rate-value {
+            color: var(--secondary-blue);
+            font-weight: bold;
+        }
+
+        /* Responsive adjustments for mobile */
+        @media (max-width: 600px) {
+            .converter-card {
+                margin-top: 10px;
+                padding: 20px;
+            }
+            .currency-selectors {
+                flex-direction: column;
+                gap: 0;
+            }
+            .currency-selectors .input-group {
+                margin-bottom: 20px;
+            }
+            h1 {
+                font-size: 1.6rem;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="converter-card">
+        <h1>စမတ်ငွေကြေးစနစ် (Smart Currency System)</h1>
+        
+        <!-- Navigation Buttons -->
+        <div class="navigation">
+            <button id="navHome" class="nav-btn active-nav">ပင်မစာမျက်နှာ</button> <!-- Home Page -->
+            <button id="navConverter" class="nav-btn">လဲလှယ်တွက်စက်</button> <!-- Converter -->
+        </div>
+
+        <!-- ---------------- HOME VIEW (SMART HOME PAGE) ---------------- -->
+        <div id="home-view" class="view-container">
+            <h2>ကြိုဆိုပါသည်!</h2> <!-- Welcome! -->
+            <p>ဤစမတ်လဲလှယ်စနစ်သို့ ကြိုဆိုပါသည်။ အောက်ပါတို့သည် အဓိက ငွေကြေးများ၏ လဲလှယ်မှု အခြေအနေများဖြစ်သည်။</p> <!-- Welcome to this smart exchange system. Below are the exchange status of major currencies. -->
+
+            <div id="rates-dashboard">
+                <!-- Dashboard content populated by JS -->
+            </div>
+        </div>
+
+        <!-- ---------------- CONVERTER VIEW ---------------- -->
+        <div id="converter-view" class="view-container">
+            <!-- Input Amount -->
+            <div class="input-group">
+                <label for="amount">ပမာဏ</label> <!-- Amount -->
+                <input type="number" id="amount" value="1000" min="0.01" step="0.01" required>
+            </div>
+            
+            <div class="currency-selectors">
+                <!-- From Currency -->
+                <div class="input-group">
+                    <label for="fromCurrency">လဲလှယ်ရန် (From)</label> <!-- Exchange From -->
+                    <select id="fromCurrency">
+                        <!-- Options populated by JavaScript -->
+                    </select>
+                </div>
+                
+                <!-- To Currency -->
+                <div class="input-group">
+                    <label for="toCurrency">ရယူရန် (To)</label> <!-- Get To -->
+                    <select id="toCurrency">
+                        <!-- Options populated by JavaScript -->
+                    </select>
+                </div>
+            </div>
+
+            <!-- Convert Button -->
+            <button id="convertBtn">လဲလှယ်မည်</button> <!-- Convert -->
+        </div>
+        
+        <!-- Result Area (Shared between views) -->
+        <div id="result">
+            <!-- Result will appear here -->
+        </div>
+
+        <!-- Error Area (Shared) -->
+        <div id="error">
+            <!-- Errors will appear here -->
+        </div>
+
+        <!-- Disclaimer Note (Shared) -->
+        <p class="note">
+            မှတ်ချက်- ဤလဲနှုန်းများသည် စမ်းသပ်ပြသရန်အတွက်သာဖြစ်ပြီး လက်ရှိလဲနှုန်းများနှင့် ကွာခြားနိုင်ပါသည်။
+        </p> <!-- Note: These exchange rates are for demonstration purposes only and may differ from current rates. -->
+    </div>
+
+    <script>
+        // --- JAVASCRIPT LOGIC ---
+
+        // 1. Exchange Rates relative to 1 MMK (Myanmar Kyat)
+        const rates = {
+            MMK: 1,
+            USD: 0.00048, // US Dollar
+            EUR: 0.00044, // Euro
+            THB: 0.017,   // Thai Baht
+            SGD: 0.00065, // Singapore Dollar
+            JPY: 0.071    // Japanese Yen
+        };
+
+        // 2. Currency display names in Burmese
+        const currencyNames = {
+            MMK: "မြန်မာကျပ် (MMK)",
+            USD: "အမေရိကန်ဒေါ်လာ (USD)",
+            EUR: "ယူရို (EUR)",
+            THB: "ထိုင်းဘတ် (THB)",
+            SGD: "စင်္ကာပူဒေါ်လာ (SGD)",
+            JPY: "ဂျပန်ယန်း (JPY)"
+        };
+
+        // DOM elements
+        const amountInput = document.getElementById('amount');
+        const fromCurrencySelect = document.getElementById('fromCurrency');
+        const toCurrencySelect = document.getElementById('toCurrency');
+        const convertButton = document.getElementById('convertBtn');
+        const resultDiv = document.getElementById('result');
+        const errorDiv = document.getElementById('error');
+        const homeView = document.getElementById('home-view');
+        const converterView = document.getElementById('converter-view');
+
+        // --- SOUND EFFECTS (Tone.js) ---
+        // Initialize Tone.js components for sound on success
+        const synth = new Tone.Synth({
+            oscillator: { type: "sine" },
+            envelope: { attack: 0.005, decay: 0.1, sustain: 0.0, release: 0.1 }
+        }).toDestination();
+        
+        /**
+         * Plays a short, friendly sound effect (two quick beeps).
+         */
+        function playSuccessSound() {
+            // Check if context is suspended (common on first interaction)
+            if (Tone.context.state !== 'running') {
+                Tone.start();
+            }
+            // Trigger notes with a slight delay for a nice confirmation chime
+            synth.triggerAttackRelease("C6", "16n");
+            synth.triggerAttackRelease("E6", "16n", "+0.1");
+        }
+
+        /**
+         * Switches between application views (Home and Converter).
+         */
+        function switchView(viewId) {
+            const views = [homeView, converterView];
+            views.forEach(view => view.classList.remove('active'));
+            document.getElementById(viewId).classList.add('active');
+
+            const navBtns = document.querySelectorAll('.nav-btn');
+            navBtns.forEach(btn => btn.classList.remove('active-nav'));
+            
+            // Activate the corresponding navigation button
+            const navId = 'nav' + viewId.replace('-view', '').charAt(0).toUpperCase() + viewId.replace('-view', '').slice(1);
+            document.getElementById(navId).classList.add('active-nav');
+        }
+
+        /**
+         * Populates the smart home page dashboard with rates relative to MMK.
+         */
+        function populateDashboard() {
+            const dashboardDiv = document.getElementById('rates-dashboard');
+            dashboardDiv.innerHTML = '';
+            
+            let dashboardHtml = '<h3>MMK နှင့် လဲလှယ်နှုန်းများ (1 MMK တွက်)</h3><ul class="rate-list">';
+            
+            // Loop through rates, excluding MMK itself
+            for (const code in rates) {
+                if (code !== 'MMK') {
+                    const name = currencyNames[code].split(' (')[0]; // Get the name without the code in parentheses
+                    const rateValue = rates[code].toFixed(6); // Show high precision for dashboard
+                    
+                    dashboardHtml += `
+                        <li class="rate-item">
+                            <span class="rate-name">${name} (${code})</span>
+                            <span class="rate-value">${rateValue}</span>
+                        </li>
+                    `;
+                }
+            }
+
+            dashboardHtml += '</ul>';
+            dashboardDiv.innerHTML = dashboardHtml;
+        }
+
+
+        /**
+         * Populates the currency select dropdowns.
+         */
+        function populateCurrencies() {
+            const currencyCodes = Object.keys(rates);
+            
+            currencyCodes.forEach(code => {
+                const name = currencyNames[code];
+                
+                // Create option for 'From' dropdown
+                const optionFrom = document.createElement('option');
+                optionFrom.value = code;
+                optionFrom.textContent = name;
+                fromCurrencySelect.appendChild(optionFrom);
+
+                // Create option for 'To' dropdown
+                const optionTo = document.createElement('option');
+                optionTo.value = code;
+                optionTo.textContent = name;
+                toCurrencySelect.appendChild(optionTo);
+            });
+
+            // Set default selections
+            fromCurrencySelect.value = 'MMK';
+            toCurrencySelect.value = 'USD';
+        }
+
+        /**
+         * Performs the currency conversion based on the MMK base rate.
+         */
+        function convertCurrency() {
+            // Clear errors
+            errorDiv.textContent = '';
+
+            const amount = parseFloat(amountInput.value);
+            const fromCode = fromCurrencySelect.value;
+            const toCode = toCurrencySelect.value;
+
+            // --- Validation ---
+            if (isNaN(amount) || amount <= 0) {
+                errorDiv.textContent = "ကျေးဇူးပြု၍ ပမာဏကို မှန်ကန်စွာ ဖြည့်ပါ။ (0 ထက်ကြီးသော ဂဏန်း)";
+                resultDiv.textContent = '';
+                return;
+            }
+            if (!fromCode || !toCode) {
+                 errorDiv.textContent = "ကျေးဇူးပြု၍ လဲလှယ်ရန် ငွေကြေးများကို ရွေးချယ်ပါ။";
+                 resultDiv.textContent = '';
+                 return;
+            }
+
+            // --- Conversion Logic ---
+            let convertedAmount;
+            
+            if (fromCode === toCode) {
+                convertedAmount = amount;
+            } else {
+                const fromRate = rates[fromCode];
+                const toRate = rates[toCode];
+                
+                // Step 1: Convert 'From' amount to MMK (e.g., USD to MMK)
+                const amountInMMK = amount / fromRate;
+
+                // Step 2: Convert MMK amount to 'To' currency (e.g., MMK to EUR)
+                convertedAmount = amountInMMK * toRate;
+            }
+
+            // Format the result string
+            const formattedAmount = amount.toFixed(2);
+            // Use Math.round for better precision display up to 4 decimal places
+            const formattedResult = convertedAmount.toFixed(4);
+
+            // Construct the result message in Burmese
+            const resultText = `ရလဒ်: ${formattedAmount} ${fromCode} = ${formattedResult} ${toCode}`;
+            
+            // Update the result area and trigger success animation/sound
+            resultDiv.textContent = resultText;
+            
+            // Brief success background flash (Animation)
+            resultDiv.style.backgroundColor = '#e6ffec'; 
+            setTimeout(() => {
+                resultDiv.style.backgroundColor = 'var(--light-bg)';
+            }, 150);
+
+            playSuccessSound(); 
+        }
+
+        // --- Event Listeners and Initialization ---
+
+        document.addEventListener('DOMContentLoaded', () => {
+            populateCurrencies();
+            populateDashboard(); // Populate the home dashboard
+            switchView('home-view'); // Start on the home view
+            
+            // Navigation event listeners
+            document.getElementById('navHome').addEventListener('click', () => {
+                switchView('home-view');
+                resultDiv.textContent = ''; // Clear result when going home
+                errorDiv.textContent = '';
+            });
+
+            document.getElementById('navConverter').addEventListener('click', () => {
+                switchView('converter-view');
+                convertCurrency(); // Run initial conversion when entering the converter
+            });
+            
+            // Convert button click
+            convertButton.addEventListener('click', convertCurrency);
+
+            // Trigger conversion when user presses 'Enter' in the amount input
+            amountInput.addEventListener('keypress', (event) => {
+                if (event.key === 'Enter') {
+                    event.preventDefault(); 
+                    convertCurrency();
+                }
+            });
+            
+            // Trigger conversion on dropdown change for a smoother UX
+            fromCurrencySelect.addEventListener('change', convertCurrency);
+            toCurrencySelect.addEventListener('change', convertCurrency);
+        });
+
+    </script>
+</body>
+</html>
